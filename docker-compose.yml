@@ -1,0 +1,9 @@
+services:
+  demo:
+    build: .
+    image: qod-demo
+    privileged: true
+    network_mode: host
+    volumes:
+      - .:/demo
+    command: /demo/run.sh
