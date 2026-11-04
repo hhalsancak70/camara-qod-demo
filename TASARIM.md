@@ -151,12 +151,12 @@ Arka plan trafiği ayrı bir namespace'ten ve video sunucusundan farklı bir hed
 
 ## 10. Kararlar
 
-**Kullanıcının verdikleri**
+**Ekibin verdiği kararlar**
 - Demo, projenin çalışma şeklini ve etkisini gösterecek; hoca konuyu biliyor.
 - Yalnızca Raspberry Pi 5 kullanılacak; Arduino yok; sade tutulacak.
 - Pi şu an hazır değil; plan buna göre yapılacak.
 
-**Claude'un verdikleri (değiştirilebilir)**
+**Teknik kararlar (değiştirilebilir)**
 - **WebRTC kütüphanesi: aiortc (Python).** GCC'nin alıcı tarafı tahmincisi Python'da ve erişilebilir olduğu için P3 birkaç satırla uygulanır; derleme gerektirmez. Bedeli: tarayıcılardaki en güncel GCC değil, libwebrtc'nin REMB tabanlı eski GCC'si. Bu, Carlucci ve ark. (2016) çalışmasında incelenen sürüm; hız artışı %8/sn, düşüşü 0,85 katsayısıyla.
 - Kamera yerine hareketli sentetik test görüntüsü.
 - Darboğaz 3 Mbps, RTT ~50 ms, QoD oturumu 30 sn, etkinleşme gecikmesi 1 sn. Hepsi ayarlanabilir.
