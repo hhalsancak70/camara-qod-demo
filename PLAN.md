@@ -1,7 +1,5 @@
 # QoD × GCC Demo — Uygulama Planı
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Raspberry Pi 5 üzerinde, CAMARA QoD API'sinin video akışına gerçek etkisini ve P2 (habersiz gönderici) ile P3 (haberdar gönderici) farkını tarayıcıdan canlı gösteren demo.
 
 **Architecture:** Tüm demo tek bir Docker konteynerinde çalışır; Mac'te geliştirilir, Pi'de aynı komutla açılır. Konteyner içinde üç network namespace (`edge`, `others`, `net`) mobil ağı emüle eder. `net` içindeki `tc` HTB darboğazına QoD servisi öncelik sınıfı ekler. aiortc ile gönderilen video, kök namespace'teki alıcıya gider. Aynı süreçteki orkestratör CAMARA API'sini HTTP ile çağırır ve panel tarayıcıya canlı veri gönderir.
