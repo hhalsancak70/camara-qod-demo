@@ -8,3 +8,8 @@ services:
     volumes:
       - .:/demo
     command: /demo/run.sh
+    environment:              # Pi'de CPU yetmezse: VIDEO_W=480 VIDEO_H=270 FPS=20 make up
+      - VIDEO_W=${VIDEO_W:-640}
+      - VIDEO_H=${VIDEO_H:-360}
+      - FPS=${FPS:-30}
+    restart: unless-stopped

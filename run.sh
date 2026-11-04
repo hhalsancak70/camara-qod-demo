@@ -8,7 +8,7 @@ python -m app.web --port 8080 &
 WEB=$!
 sleep 2
 # Gönderici bağlantı koparsa kendiliğinden yeniden bağlanır.
-( while true; do ip netns exec edge python -m media.sender >> /tmp/sender.log 2>&1; sleep 2; done ) &
+( while true; do ip netns exec edge python -m media.sender --width "${VIDEO_W:-640}" --height "${VIDEO_H:-360}" --fps "${FPS:-30}" >> /tmp/sender.log 2>&1; sleep 2; done ) &
 echo "============================================================"
 echo " Panel hazır:  http://localhost:8080"
 echo " Pi'de:        http://<pi-adresi>:8080"
