@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QoD × GCC Demo</title>
+<style>
+  :root {
+    --bg: #f4f3ef; --card: #ffffff; --ink: #17212b; --muted: #5b6670; --line: #dcdad3;
+    --teal: #0f6e61; --teal-soft: #e3f1ee; --orange: #b4501c; --orange-soft: #fbebe2;
+    --blue: #2563a8; --red: #b42318;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; padding: 16px 20px 8px; }
+  header h1 { margin: 0; font-size: 22px; }
+  header .sub { color: var(--muted); }
+  main { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 16px; padding: 8px 20px 20px; }
+  @media (max-width: 1050px) { main { grid-template-columns: 1fr; } }
+  .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .card h2 { margin: 0 0 10px; font-size: 15px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .video { position: relative; background: #111; border-radius: 8px; overflow: hidden; aspect-ratio: 16 / 9; }
+  .video img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .chips { position: absolute; left: 8px; bottom: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { background: rgba(0,0,0,.65); color: #fff; padding: 3px 9px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  button { font: inherit; border: 1px solid var(--line); background: #fff; color: var(--ink);
+           padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+  button:hover { border-color: var(--ink); }
+  button.primary { background: var(--teal); color: #fff; border-color: var(--teal); }
+  button.p3 { background: var(--orange); color: #fff; border-color: var(--orange); }
+  button.on { background: var(--ink); color: #fff; }
+  button:disabled { opacity: .5; cursor: default; }
+  .label { color: var(--muted); font-size: 13px; }
+  .state { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .pill { padding: 4px 12px; border-radius: 999px; font-weight: 600; font-family: ui-monospace, Menlo, monospace; background: #eceae4; }
+  .pill.REQUESTED { background: #fff2cc; }
+  .pill.AVAILABLE { background: var(--teal); color: #fff; }
+  .pill.UNAVAILABLE { background: #eceae4; }
+  .big { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+  th:not(:first-child), td:not(:first-child) { text-align: right; }
+  .chart { position: relative; height: 230px; }
+  .log { max-height: 340px; overflow: auto; font: 13px/1.4 ui-monospace, Menlo, monospace; }
+  .log details { border-bottom: 1px solid var(--line); padding: 4px 0; }
+  .log summary { cursor: pointer; }
+  .log pre { margin: 6px 0; padding: 8px; background: #f7f6f2; border-radius: 6px; white-space: pre-wrap; word-break: break-word; }
+  .ok { color: var(--teal); } .bad { color: var(--red); } .note { color: var(--orange); }
+  .p3log { color: var(--orange); font-size: 13px; min-height: 1.4em; }
+  footer { padding: 0 20px 20px; color: var(--muted); font-size: 13px; }
+  #toast { position: fixed; right: 20px; bottom: 20px; background: var(--red); color: #fff; padding: 10px 14px;
+           border-radius: 8px; display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>QoD × GCC canlı demo</h1>
+  <span class="sub">CAMARA Quality on Demand ile geçici ağ önceliği ve gerçek zamanlı video</span>
+</header>
+<main>
+  <div class="col">
+    <section class="card">
+      <h2>Edge kameradan gelen video</h2>
+      <div class="video">
+        <img src="/video.mjpg" alt="Raspberry Pi'deki edge cihazdan gelen canlı test görüntüsü">
+        <div class="chips">
+          <span class="chip" id="c-e2e">gecikme — ms</span>
+          <span class="chip" id="c-rx">— kbps</span>
+          <span class="chip" id="c-fps">— fps</span>
+          <span class="chip" id="c-load">ağ boş</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>QoD oturumu</h2>
+      <div class="state">
+        <span class="pill" id="qod-pill">YOK</span>
+        <span class="big" id="qod-left"></span>
+        <span class="label" id="qod-info">Henüz oturum yok</span>
+      </div>
+      <div class="p3log" id="p3log"></div>
+    </section>
+
+    <section class="card">
+      <h2>Senaryo</h2>
+      <div class="row">
+        <button class="primary" data-post="/api/scenario/P2">Senaryo: P2 (gönderici habersiz)</button>
+        <button class="p3" data-post="/api/scenario/P3">Senaryo: P3 (gönderici haberdar)</button>
+      </div>
+      <p class="label" id="scen-status">Her senaryo ~65 sn: 10. sn'de ağ yoğunlaşır, 20. sn'de 30 sn'lik QoD istenir.</p>
+      <h2>Elle kontrol</h2>
+      <div class="row">
+        <button id="b-load" data-toggle-load>Ağı yoğunlaştır</button>
+        <button data-post="/api/qod/request">QoD iste</button>
+        <button data-post="/api/qod/delete">Oturumu sil</button>
+        <span class="label">Gönderici:</span>
+        <button id="b-P2" data-post="/api/policy/P2">P2 habersiz</button>
+        <button id="b-P3" data-post="/api/policy/P3">P3 haberdar</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Sonuç: P2 ile P3</h2>
+      <table>
+        <thead><tr><th></th><th>P2 habersiz</th><th>P3 haberdar</th></tr></thead>
+        <tbody>
+          <tr><td>Hedef hıza ulaşma süresi</td><td id="r-P2-ttt">—</td><td id="r-P3-ttt">—</td></tr>
+          <tr><td>Önceliğin kullanılan oranı</td><td id="r-P2-util">—</td><td id="r-P3-util">—</td></tr>
+          <tr><td>Kapanış sıçraması (en yüksek gecikme)</td><td id="r-P2-spike">—</td><td id="r-P3-spike">—</td></tr>
+        </tbody>
+      </table>
+      <p class="label">Hedef hız: profil hızının %90'ı (kalan pay paket başlıkları için). Ulaşma: 3 sn boyunca hedefin %90'ında kalmak.</p>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="card">
+      <h2>Bit hızı (kbps)</h2>
+      <div class="chart"><canvas id="ch-rate" aria-label="Alınan video hızı, GCC tahmini, bağlantı kapasitesi ve QoD profil hızı"></canvas></div>
+    </section>
+    <section class="card">
+      <h2>Uçtan uca gecikme (ms) ve kayıp (%)</h2>
+      <div class="chart"><canvas id="ch-delay" aria-label="Uçtan uca gecikme ve paket kaybı"></canvas></div>
+    </section>
+    <section class="card">
+      <h2>CAMARA API kaydı</h2>
+      <div class="log" id="log"></div>
+    </section>
+  </div>
+</main>
+<footer>Ağ: Raspberry Pi üzerinde emüle edilmiş 3 Mbps mobil uplink (Linux tc). QoD API: CAMARA QoD 1.1.0 uyumlu yerel servis.</footer>
+<div id="toast" role="status"></div>
+<script src="/static/chart.umd.min.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

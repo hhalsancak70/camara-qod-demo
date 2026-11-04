@@ -92,6 +92,10 @@ class Orchestrator:
         self._busy = False
 
     # --- yardımcılar ---------------------------------------------------------
+    @property
+    def busy(self) -> bool:
+        return self._busy
+
     def set_policy(self, policy: str) -> None:
         if policy not in ("P2", "P3"):
             raise ValueError(policy)

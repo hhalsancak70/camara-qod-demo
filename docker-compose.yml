@@ -2,8 +2,9 @@ services:
   demo:
     build: .
     image: qod-demo
-    privileged: true
-    network_mode: host
+    privileged: true          # ağ namespace'leri ve tc için
+    ports:
+      - "8080:8080"           # panel
     volumes:
       - .:/demo
     command: /demo/run.sh
