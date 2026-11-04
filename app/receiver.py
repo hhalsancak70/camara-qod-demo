@@ -14,6 +14,8 @@ from aiohttp import web
 from aiortc import clock as aiortc_clock
 from aiortc import RTCConfiguration, RTCPeerConnection, RTCSessionDescription
 
+from aiortc.rate import OveruseDetector, OveruseEstimator
+
 from media.source import decode_stamp
 
 log = logging.getLogger("receiver")
@@ -29,6 +31,18 @@ def _server_only(use_ipv4: bool, use_ipv6: bool) -> list[str]:
 
 
 aioice.ice.get_host_addresses = _server_only
+
+
+def apply_estimate(est, kbps: int, now_ms: int) -> None:
+    """P3: GCC tahminini dışarıdan ayarla ve tıkanıklık hafızasını sıfırla.
+
+    QoD açılınca eski kuyruğun boşalması gecikmeyi geçici olarak artırır; GCC bunu tıkanıklık
+    sanıp hızı hemen kesmesin diye gecikme dedektörü ve 'eski azami hız' hafızası temizlenir.
+    """
+    rc = est.rate_control
+    rc.set_estimate(int(kbps * 1000), now_ms)
+    rc.avg_max_bitrate_kbps, rc.near_max = None, False
+    est.detector, est.estimator = OveruseDetector(), OveruseEstimator()
 
 
 class Receiver:
@@ -114,7 +128,7 @@ class Receiver:
         if est is None:
             log.warning("GCC tahmini ayarlanamadı: aktif video alıcısı yok")
             return
-        est.rate_control.set_estimate(int(kbps * 1000), int(time.time() * 1000))
+        apply_estimate(est, kbps, aiortc_clock.current_ms())
 
     def latest_jpeg(self) -> bytes | None:
         if self._latest is None:

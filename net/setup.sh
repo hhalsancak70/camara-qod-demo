@@ -37,11 +37,14 @@ for d in e0:edge o0:others n-edge:net n-oth:net n-srv:net; do
 done
 ethtool -K s0 tso off gso off gro off >/dev/null 2>&1 || true
 
-# Uplink darboğazı: n-srv çıkışı. 1:20 varsayılan (best effort) sınıf, büyük kuyruk.
+# Uplink darboğazı: n-srv çıkışı. 1:20 varsayılan (best effort) sınıf.
+# Yaprakta akış başına adil kuyruk (sfq): mobil hücrede her kullanıcının kendi kuyruğu olur ve
+# kapasite kullanıcılar arasında paylaşılır. Böylece videonun gecikmesini başkalarının TCP'si
+# değil, kendi gönderim hızı belirler.
 ip netns exec net tc qdisc add dev n-srv root handle 1: htb default 20
 ip netns exec net tc class add dev n-srv parent 1: classid 1:1 htb rate ${LINK_KBIT}kbit ceil ${LINK_KBIT}kbit
 ip netns exec net tc class add dev n-srv parent 1:1 classid 1:20 htb rate ${LINK_KBIT}kbit ceil ${LINK_KBIT}kbit prio 1
-ip netns exec net tc qdisc add dev n-srv parent 1:20 handle 20: pfifo limit 400
+ip netns exec net tc qdisc add dev n-srv parent 1:20 handle 20: sfq perturb 0 limit 600 depth 120
 
 # RTT: yalnızca dönüş yolunda gecikme.
 ip netns exec net tc qdisc add dev n-edge root netem delay ${RTT_MS}ms
